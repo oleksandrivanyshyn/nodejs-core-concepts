@@ -16,7 +16,6 @@ const fs = require('fs/promises');
 
         }
 
-
     }
     const deleteFile = async (filePath) => {
         try{
@@ -64,6 +63,7 @@ const fs = require('fs/promises');
         //delete a file <path>
         if(command.includes(DELETE_FILE_COMMAND)){
             const filePath = command.substring(DELETE_FILE_COMMAND.length + 1);
+            await deleteFile(filePath);
         }
         //rename a file
         //rename a file <path> <new-path>
