@@ -36,8 +36,19 @@ const fs = require('fs/promises');
             console.log(`File ${filePath} does not exist`);
         }
     }
-    const addToFile = async (filePath, content) => {
 
+    let addedContent;
+
+    const addToFile = async (filePath, content) => {
+        if(addedContent === content) return;
+        try{
+            await fs.appendFile(filePath, content);
+            addedContent = content;
+            console.log(`Content added to file ${filePath}`);
+        }
+        catch(err){
+            console.log(`File ${filePath} does not exist`);
+        }
     }
     //commands
     const CREATE_FILE_COMMAND = 'create a file';
@@ -79,10 +90,12 @@ const fs = require('fs/promises');
             await renameFile(filePath, newFilePath);
         }
         //add to a file
-        //add to a file <path> this <content> content: <content>
+        //add to a file <path> this <content>
         if(command.includes(ADD_TO_FILE_COMMAND)){
-            const _idx = command.indexOf(' this content: ');
+            const _idx = command.indexOf(' this ');
             const filePath = command.substring(ADD_TO_FILE_COMMAND.length + 1, _idx);
+            const content = command.substring(_idx + 6);
+            await addToFile(filePath, content);
 
         }
     });
