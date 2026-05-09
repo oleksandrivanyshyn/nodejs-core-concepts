@@ -1,1 +1,1 @@
-delete a file text.txt
+rename a file text.txt to documents.txt

@@ -28,8 +28,13 @@ const fs = require('fs/promises');
 
     }
     const renameFile = async (filePath, newFilePath) => {
-
-
+        try{
+            await fs.rename(filePath, newFilePath);
+            console.log(`File ${filePath} renamed to ${newFilePath}`);
+        }
+        catch(err){
+            console.log(`File ${filePath} does not exist`);
+        }
     }
     const addToFile = async (filePath, content) => {
 
@@ -66,7 +71,7 @@ const fs = require('fs/promises');
             await deleteFile(filePath);
         }
         //rename a file
-        //rename a file <path> <new-path>
+        //rename a file <path> to <new-path>
         if(command.includes(RENAME_FILE_COMMAND)){
             const _idx = command.indexOf(' to ');
             const filePath = command.substring(RENAME_FILE_COMMAND.length + 1, _idx);
