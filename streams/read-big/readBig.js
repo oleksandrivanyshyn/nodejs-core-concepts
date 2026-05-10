@@ -1,6 +1,7 @@
 const fs = require('node:fs/promises');
 
 (async () => {
+    console.time('readBig');
     const fileHandleRead = await fs.open('src.txt', 'r');
     const fileHandleWrite = await fs.open('dist.txt', 'w');
 
@@ -18,11 +19,18 @@ const fs = require('node:fs/promises');
         if(Number(numbers[numbers.length - 2] + 1) !== Number(numbers[numbers.length-1])){
             split = numbers.pop();
         }
-        
+        numbers.forEach(number => {
+            let n = Number(number.trim());
+            if(n%2 === 0) if(!streamWrite.write(' ' + n + ' ')) streamRead.pause();
+        })
 
-        if(!streamWrite.write(chunk)) streamRead.pause();
+
     });
     streamWrite.on('drain', () => {
         streamRead.resume();
+    })
+    streamRead.on('end', () => {
+        console.log('Done!');
+        console.timeEnd('readBig');
     })
 })()
