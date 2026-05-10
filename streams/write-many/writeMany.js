@@ -4,13 +4,13 @@
 // CPU Usage: 100% (one core)
 // Memory Usage: 50MB
 // (async () => {
-//   console.time("writeMany");
-//   const fileHandle = await fs.open("test.txt", "w");
+//   console.time("write-many");
+//   const fileHandle = await fs.open("src.txt", "w");
 
 //   for (let i = 0; i < 1000000; i++) {
 //     await fileHandle.write(` ${i} `);
 //   }
-//   console.timeEnd("writeMany");
+//   console.timeEnd("write-many");
 // })();
 
 // Execution Time: 1.8s
@@ -19,14 +19,14 @@
 // const fs = require("node:fs");
 
 // (async () => {
-//   console.time("writeMany");
-//   fs.open("test.txt", "w", (err, fd) => {
+//   console.time("write-many");
+//   fs.open("src.txt", "w", (err, fd) => {
 //     for (let i = 0; i < 1000000; i++) {
 //       const buff = Buffer.from(` ${i} `, "utf-8");
 //       fs.writeSync(fd, buff);
 //     }
 
-//     console.timeEnd("writeMany");
+//     console.timeEnd("write-many");
 //   });
 // })();
 
@@ -37,8 +37,8 @@
 // CPU Usage: 100% (one core)
 // Memory Usage: 200MB
 // (async () => {
-//   console.time("writeMany");
-//   const fileHandle = await fs.open("test.txt", "w");
+//   console.time("write-many");
+//   const fileHandle = await fs.open("src.txt", "w");
 
 //   const stream = fileHandle.createWriteStream();
 
@@ -46,7 +46,7 @@
 //     const buff = Buffer.from(` ${i} `, "utf-8");
 //     stream.write(buff);
 //   }
-//   console.timeEnd("writeMany");
+//   console.timeEnd("write-many");
 // })();
 
 const fs = require("node:fs/promises");
@@ -54,8 +54,8 @@ const fs = require("node:fs/promises");
 // Execution Time: 300ms
 // Memory Usage: 50MB
 (async () => {
-  console.time("writeMany");
-  const fileHandle = await fs.open("test.txt", "w");
+  console.time("write-many");
+  const fileHandle = await fs.open("src.txt", "w");
 
   const stream = fileHandle.createWriteStream();
 
@@ -84,7 +84,7 @@ const fs = require("node:fs/promises");
 
   let i = 0;
 
-  const numberOfWrites = 1000000;
+  const numberOfWrites = 10000000;
 
   const writeMany = () => {
     while (i < numberOfWrites) {
@@ -111,7 +111,7 @@ const fs = require("node:fs/promises");
   });
 
   stream.on("finish", () => {
-    console.timeEnd("writeMany");
+    console.timeEnd("write-many");
     fileHandle.close();
   });
 })();
