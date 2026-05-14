@@ -9,7 +9,6 @@ server.on('connection', (socket) => {
 
   socket.on('data', (data) => {
     for (const client of clients) {
-      console.log(client.address());
       client.write(data);
     }
   });
