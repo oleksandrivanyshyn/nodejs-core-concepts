@@ -1,5 +1,5 @@
-const net = require('net');
-const readline = require('readline/promises');
+const net = require("net");
+const readline = require("readline/promises");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -14,7 +14,7 @@ const clearLine = (dir) => {
   });
 };
 
-moveCursor = (dx, dy) => {
+const moveCursor = (dx, dy) => {
   return new Promise((resolve, reject) => {
     process.stdout.moveCursor(dx, dy, () => {
       resolve();
@@ -22,27 +22,50 @@ moveCursor = (dx, dy) => {
   });
 };
 
+let id;
+
 const socket = net.createConnection(
-  { host: '127.0.0.1', port: 3008 },
+  { host: "127.0.0.1", port: 3008 },
   async () => {
-    console.log('Connected to the server!');
+    console.log("Connected to the server!");
+
     const ask = async () => {
-      const message = await rl.question('Enter a message > ');
+      const message = await rl.question("Enter a message > ");
+      // move the cursor one line up
       await moveCursor(0, -1);
+      // clear the current line that the cursor is in
       await clearLine(0);
-      socket.write(message);
+      socket.write(`${id}-message-${message}`);
     };
-    await ask();
-    socket.on('data', async (data) => {
+
+    ask();
+
+    socket.on("data", async (data) => {
+      // log an empty line
       console.log();
+      // move the cursor one line up
       await moveCursor(0, -1);
+      // clear that line that cursor just moved into
       await clearLine(0);
-      console.log(data.toString());
-      await ask();
+
+      if (data.toString("utf-8").substring(0, 2) === "id") {
+        // When we are getting the id...
+
+        // everything from the third character up until the end
+        id = data.toString("utf-8").substring(3);
+
+        console.log(`Your id is ${id}!\n`);
+      } else {
+        // When we are getting a message...
+
+        console.log(data.toString("utf-8"));
+      }
+
+      ask();
     });
-  },
+  }
 );
 
-socket.on('end', () => {
-  console.log('Connection was ended!');
+socket.on("end", () => {
+  console.log("Connection was ended!");
 });
