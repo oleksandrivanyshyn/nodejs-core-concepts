@@ -1,27 +1,45 @@
-const net = require("net");
-const fs = require("node:fs/promises");
+const net = require('net');
+const fs = require('node:fs/promises');
 
 const server = net.createServer(() => {});
 
 let fileHandle, fileWriteStream;
 
-server.on("connection", (socket) => {
-  console.log("New connection!");
+server.on('connection', (socket) => {
+  console.log('New connection!');
 
-  socket.on("data", async (data) => {
-    fileHandle = await fs.open(`storage/test.txt`, "w");
-    fileWriteStream = fileHandle.createWriteStream();
+  socket.on('data', async (data) => {
+    if (!fileHandle) {
+      socket.pause(); // pause receiving data from the client
+      const indexOfDivider = data.indexOf('-------');
+      const fileName = data.slice(10, indexOfDivider).toString(); // extract the file name from the data
 
-    // Writing to our destination file
-    fileWriteStream.write(data);
+      fileHandle = await fs.open(`storage/${fileName}`, 'w');
+      fileWriteStream = fileHandle.createWriteStream(); // the stream to write to
+
+      // Writing to our destination file, discard the headers
+      fileWriteStream.write(data.slice(indexOfDivider + 7));
+
+      socket.resume(); // resume receiving data from the client
+      fileWriteStream.on('drain', () => {
+        socket.resume();
+      });
+    } else {
+      if (!fileWriteStream.write(data)) {
+        socket.pause();
+      }
+    }
   });
 
-  socket.on("end", () => {
-    console.log("Connection ended!");
-    fileHandle.close();
+  // This end event happens when the client.js file ends the socket
+  socket.on('end', () => {
+    if (fileHandle) fileHandle.close();
+    fileHandle = undefined;
+    fileWriteStream = undefined;
+    console.log('Connection ended!');
   });
 });
 
-server.listen(5050, "::1", () => {
-  console.log("Uploader server opened on", server.address());
+server.listen(5050, '::1', () => {
+  console.log('Uploader server opened on', server.address());
 });
