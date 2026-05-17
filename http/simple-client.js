@@ -9,15 +9,12 @@ const request = http.request({
   path: '/create-post',
   headers: {
     'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(
-      JSON.stringify({ title: 'Hey you still there?' }),
-    ),
   },
 });
-// request.write(JSON.stringify({ title: 'Hi there!' }));
-// request.write(JSON.stringify({ title: 'How are you doing?' }));
+request.write(JSON.stringify({ title: 'Hi there!' }));
+request.write(JSON.stringify({ title: 'How are you doing?' }));
 request.write(JSON.stringify({ title: 'Hey you still there?' }));
-//request.end(JSON.stringify({ title: 'This is going to be my last message!' }));
+request.end(JSON.stringify({ title: 'This is going to be my last message!' }));
 
 request.on('response', (response) => {
   console.log(response.statusCode);
