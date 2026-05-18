@@ -25,6 +25,10 @@ server.route("get", "/", (req, res) => {
   res.sendFile("./public/index.html", "text/html");
 });
 
+server.route("get", "/login", (req, res) => {
+  res.sendFile("./public/index.html", "text/html");
+});
+
 server.route("get", "/styles.css", (req, res) => {
   res.sendFile("./public/styles.css", "text/css");
 });
@@ -34,6 +38,34 @@ server.route("get", "/scripts.js", (req, res) => {
 });
 
 // ------ JSON Routes ------ //
+
+// Log a user in and give them a token
+server.route("post", "/api/login", (req, res) => {
+  let body = "";
+  req.on("data", (chunk) => {
+    body += chunk.toString("utf-8");
+  });
+
+  req.on("end", () => {
+    body = JSON.parse(body);
+
+    const username = body.username;
+    const password = body.password;
+
+    // Check if the user exists
+    const user = USERS.find((user) => user.username === username);
+
+    // Check the password if the user was found
+    if (user && user.password === password) {
+      // At this point, we know that the client is who they say they are
+      res.status(200).json({ message: "Logged in successfully!" });
+    } else {
+      res.status(401).json({ error: "Invalid username or password." });
+    }
+  });
+});
+
+server.route("get", "/api/user", (req, res) => {});
 
 // Send the list of all the posts that we have
 server.route("get", "/api/posts", (req, res) => {
