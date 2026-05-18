@@ -30,6 +30,24 @@ server.on('request', async (request, response) => {
 
     fileStream.pipe(response);
   }
+  if (request.url === '/login' && request.method === 'POST') {
+    response.setHeader('Content-Type', 'application/json');
+    response.statusCode = 200;
+
+    const body = {
+      message: 'Logging you in...',
+    };
+    response.end(JSON.stringify(body));
+  }
+  if (request.url === '/user' && request.method === 'PUT') {
+    response.setHeader('Content-Type', 'application/json');
+    response.statusCode = 401;
+
+    const body = {
+      message: 'You first have to log in!',
+    };
+    response.end(JSON.stringify(body));
+  }
 });
 
 server.listen(9000, () => {
