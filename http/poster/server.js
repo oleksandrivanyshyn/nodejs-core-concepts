@@ -23,19 +23,66 @@ const PORT = 8000;
 
 const server = new Butter();
 
+// For authentication
+server.beforeEach((req, res, next) => {
+  const routesToAuthenticate = [
+    "GET /api/user",
+    "PUT /api/user",
+    "POST /api/posts",
+    "DELETE /api/logout",
+  ];
+
+  if (routesToAuthenticate.indexOf(req.method + " " + req.url) !== -1) {
+    // If we have a token cookie, then save the userId to the req object
+    if (req.headers.cookie) {
+      const token = req.headers.cookie.split("=")[1];
+
+      const session = SESSIONS.find((session) => session.token === token);
+      if (session) {
+        req.userId = session.userId;
+        return next();
+      }
+    }
+
+    return res.status(401).json({ error: "Unauthorized" });
+  } else {
+    next();
+  }
+});
+
+const parseJSON = (req, res, next) => {
+  // This is only good for bodies that their size is less than the highWaterMark value
+  if (req.headers["content-type"] === "application/json") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString("utf-8");
+    });
+
+    req.on("end", () => {
+      body = JSON.parse(body);
+      req.body = body;
+      return next();
+    });
+  } else {
+    next();
+  }
+};
+
+// For parsing JSON body
+server.beforeEach(parseJSON);
+
+// For different routes that need the index.html file
+server.beforeEach((req, res, next) => {
+  const routes = ["/", "/login", "/profile", "/new-post"];
+
+  if (routes.indexOf(req.url) !== -1 && req.method === "GET") {
+    return res.status(200).sendFile("./public/index.html", "text/html");
+  } else {
+    next();
+  }
+});
+
 // ------ Files Routes ------ //
-
-server.route("get", "/", (req, res) => {
-  res.sendFile("./public/index.html", "text/html");
-});
-
-server.route("get", "/login", (req, res) => {
-  res.sendFile("./public/index.html", "text/html");
-});
-
-server.route("get", "/profile", (req, res) => {
-  res.sendFile("./public/index.html", "text/html");
-});
 
 server.route("get", "/styles.css", (req, res) => {
   res.sendFile("./public/styles.css", "text/css");
@@ -49,49 +96,40 @@ server.route("get", "/scripts.js", (req, res) => {
 
 // Log a user in and give them a token
 server.route("post", "/api/login", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString("utf-8");
-  });
+  const username = req.body.username;
+  const password = req.body.password;
 
-  req.on("end", () => {
-    body = JSON.parse(body);
+  // Check if the user exists
+  const user = USERS.find((user) => user.username === username);
 
-    const username = body.username;
-    const password = body.password;
+  // Check the password if the user was found
+  if (user && user.password === password) {
+    // At this point, we know that the client is who they say they are
 
-    // Check if the user exists
-    const user = USERS.find((user) => user.username === username);
+    // Generate a random 10 digit token
+    const token = Math.floor(Math.random() * 10000000000).toString();
 
-    // Check the password if the user was found
-    if (user && user.password === password) {
-      // At this point, we know that the client is who they say they are
+    // Save the generated token
+    SESSIONS.push({ userId: user.id, token: token });
 
-      // Generate a random 10 digit token
-      const token = Math.floor(Math.random() * 10000000000).toString();
-
-      // Save the generated token
-      SESSIONS.push({ userId: user.id, token: token });
-
-      res.setHeader("Set-Cookie", `token=${token}; Path=/;`);
-      res.status(200).json({ message: "Logged in successfully!" });
-    } else {
-      res.status(401).json({ error: "Invalid username or password." });
-    }
-  });
-});
-
-server.route("get", "/api/user", (req, res) => {
-  const token = req.headers.cookie.split("=")[1];
-
-  const session = SESSIONS.find((session) => session.token === token);
-  if (session) {
-    // Send the user's profile info
-    console.log("Sending user info...");
+    res.setHeader("Set-Cookie", `token=${token}; Path=/;`);
+    res.status(200).json({ message: "Logged in successfully!" });
   } else {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "Invalid username or password." });
   }
 });
+
+// Log a user out
+server.route("delete", "/api/logout", (req, res) => {});
+
+// Send user info
+server.route("get", "/api/user", (req, res) => {
+  const user = USERS.find((user) => user.id === req.userId);
+  res.json({ username: user.username, name: user.name });
+});
+
+// Update a user info
+server.route("put", "/api/user", (req, res) => {});
 
 // Send the list of all the posts that we have
 server.route("get", "/api/posts", (req, res) => {
@@ -103,6 +141,9 @@ server.route("get", "/api/posts", (req, res) => {
 
   res.status(200).json(posts);
 });
+
+// Create a new post
+server.route("post", "/api/posts", (req, res) => {});
 
 server.listen(PORT, () => {
   console.log(`Server has started on port ${PORT}`);
